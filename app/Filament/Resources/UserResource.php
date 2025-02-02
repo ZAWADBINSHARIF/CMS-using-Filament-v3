@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -27,7 +30,17 @@ class UserResource extends Resource
             ->schema([
                 TextInput::make("name")->required(),
                 TextInput::make("email")->required()->email(),
-                TextInput::make("password")->required()->password()
+                Select::make('role')
+                    ->options([
+                        UserRole::Admin->value => 'Admin',
+                        UserRole::Editor->value => 'Editor',
+                        UserRole::Viewer->value => 'Viewer',
+                    ])
+                    ->required(),
+                TextInput::make("password")
+                    ->required(fn(Get $get) => is_null($get('id')))
+                    ->dehydrated(fn($state) => !is_null($state))
+                    ->password()
             ]);
     }
 
@@ -36,7 +49,17 @@ class UserResource extends Resource
         return $table
             ->columns([
                 TextColumn::make("name"),
-                TextColumn::make("email")
+                TextColumn::make("email"),
+                TextColumn::make("role")
+                    ->formatStateUsing(fn($state) => strtoupper($state->value))
+                    ->badge()
+                    ->color(function ($state): string {
+                        return match ($state->value) {
+                            'admin' => 'danger',
+                            'editor' => 'info',
+                            'viewer' => 'success'
+                        };
+                    })
             ])
             ->filters([
                 //
