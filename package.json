@@ -4,7 +4,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "php": "php artisan"
+        "php": "php artisan",
+        "start": "php artisan serve --port=4000"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.20",

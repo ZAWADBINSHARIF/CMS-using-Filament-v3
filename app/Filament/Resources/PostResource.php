@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PostResource\Pages;
+use App\Filament\Resources\PostResource\RelationManagers\AuthorRelationManager;
 use App\Models\Post;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\ColorPicker;
@@ -20,6 +21,8 @@ use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -55,13 +58,22 @@ class PostResource extends Resource
                         ]
                     )->columnSpan(2)->columns(2),
                 Group::make()->schema([
+
                     Section::make("Image")->schema([
                         FileUpload::make("thumbnail")
                             ->disk('public')->directory("posts"),
                     ])->collapsed(false),
+
                     Section::make("Meta")->schema([
                         TagsInput::make("tags"),
                         Checkbox::make('published')->default(false)
+                    ]),
+
+                    Section::make("Author")->schema([
+                        Select::make("author")
+                            ->relationship("author", "name")
+                            ->searchable()
+                            ->multiple()
                     ])
                 ])->columnSpan(1),
             ])->columns(3);
@@ -88,7 +100,8 @@ class PostResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
-                //
+                Filter::make('published')->query(fn(Builder $query) => $query->where('published', true)),
+                SelectFilter::make('tags')->relationship('category', 'name')->searchable()->preload()
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -103,7 +116,7 @@ class PostResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            AuthorRelationManager::class
         ];
     }
 
