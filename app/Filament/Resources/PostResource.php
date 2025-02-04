@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\PostExporter;
 use App\Filament\Resources\PostResource\Pages;
 use App\Filament\Resources\PostResource\RelationManagers\AuthorRelationManager;
 use App\Models\Post;
+use Filament\Actions\Exports\Enums\ExportFormat;
+use Filament\Actions\Exports\Models\Export;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -17,6 +20,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Actions\ExportBulkAction;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -29,9 +34,23 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PostResource extends Resource
 {
+    protected static ?string $navigationGroup = 'Post';
+
     protected static ?string $model = Post::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $navigationLabel = 'Article';
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return Post::count();
+    }
 
     public static function form(Form $form): Form
     {
@@ -106,10 +125,18 @@ class PostResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(PostExporter::class)
+                // ->formats([ExportFormat::Xlsx, ExportFormat::Csv])
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
                 ]),
+                ExportBulkAction::make()
+                    ->exporter(PostExporter::class)
+                // ->formats([ExportFormat::Xlsx, ExportFormat::Csv])
             ]);
     }
 

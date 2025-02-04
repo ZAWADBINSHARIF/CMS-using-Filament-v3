@@ -9,25 +9,51 @@ use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CategoryResource extends Resource
 {
+
+    protected static ?string $navigationGroup = 'Post';
+
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return Category::count();
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                TextInput::make("name")->required(),
-                TextInput::make("slug")->required()
+                TextInput::make("name")
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function (string $operation, Set $set, string $state, string $old, Get $get) {
+
+                        if ($operation) {
+                            $set('slug', Str::slug($state, separator: "-"));
+                        }
+                    })
+                    ->required(),
+                TextInput::make("slug")
+                    ->disabled()
+                    ->required()
             ]);
     }
 
